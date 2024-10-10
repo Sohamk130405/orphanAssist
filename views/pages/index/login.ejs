@@ -1,0 +1,16 @@
+<% layout('layouts/boilerplate') -%>
+<form action="/api/login" method="POST">
+  <label for="email">Email:</label>
+  <input type="email" name="email" id="email" required />
+
+  <label for="password">Password:</label>
+  <input type="password" name="password" id="password" required />
+
+  <label for="role">Login as:</label>
+  <select name="role" id="role" required>
+    <option value="user">User</option>
+    <option value="organization">Organization</option>
+  </select>
+
+  <button type="submit">Login</button>
+</form>

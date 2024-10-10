@@ -1,0 +1,40 @@
+<% layout("layouts/boilerplate.ejs") -%> <% if(user){ %>
+<h1>Welcome User</h1>
+<form action="/api/logout" method="GET">
+  <button type="submit">Logout</button>
+</form>
+<form action="/api/upload" method="POST" enctype="multipart/form-data">
+  <label for="photo">Upload Photo:</label>
+  <input type="file" name="photo" id="photo" accept="image/*" required />
+
+  <input type="hidden" name="latitude" id="latitude" />
+  <input type="hidden" name="longitude" id="longitude" />
+
+  <button type="submit">Submit</button>
+</form>
+
+<% }else{ %>
+<button onclick="location.href='/api/login'">Login</button>
+<% } %>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Automatically get user's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          document.getElementById("latitude").value = position.coords.latitude;
+          document.getElementById("longitude").value =
+            position.coords.longitude;
+        },
+        function (error) {
+          alert(
+            "Could not get your location. Please enable location services."
+          );
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  });
+</script>

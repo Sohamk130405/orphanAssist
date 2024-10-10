@@ -1,0 +1,144 @@
+<% layout('layouts/boilerplate') -%>
+<form action="/api/signup" method="POST">
+  <label for="name">Name:</label>
+  <input type="text" name="name" id="name" required />
+
+  <label for="email">Email:</label>
+  <input type="email" name="email" id="email" required />
+
+  <label for="phone">Phone:</label>
+  <input type="tel" name="phone" id="phone" required />
+
+  <label for="password">Password:</label>
+  <input type="password" name="password" id="password" required />
+
+  <label for="role">Sign up as:</label>
+  <select name="role" id="role" required>
+    <option value="user">User</option>
+    <option value="organization">Organization</option>
+  </select>
+
+  <div id="locationField" style="display: none">
+    <label for="location">Select Location:</label>
+    <input type="text" id="locationInput" placeholder="Search for a location" />
+    <button type="button" id="searchButton">Search</button>
+    <div id="map" style="height: 400px; width: 100%"></div>
+    <input type="hidden" name="latitude" id="latitude" />
+    <input type="hidden" name="longitude" id="longitude" />
+  </div>
+
+  <button type="submit">Sign Up</button>
+</form>
+
+<script>
+  // Event listener for role selection
+  document.getElementById("role").addEventListener("change", function () {
+    const locationField = document.getElementById("locationField");
+    if (this.value === "organization") {
+      locationField.style.display = "block"; // Show location input
+      initMap(); // Initialize the map when the organization role is selected
+    } else {
+      locationField.style.display = "none"; // Hide location input
+    }
+  });
+
+  function initMap() {
+    const map = L.map("map").setView([20.5937, 78.9629], 5); // Set initial view to India
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap",
+    }).addTo(map);
+
+    let marker;
+
+    // Attempt to get the user's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          const { latitude, longitude } = position.coords;
+
+          // Set map view to the user's current location
+          map.setView([latitude, longitude], 13); // Zoom level 13
+
+          // Add a marker at the user's current location
+          marker = L.marker([latitude, longitude]).addTo(map);
+
+          // Set latitude and longitude in hidden input fields
+          document.getElementById("latitude").value = latitude;
+          document.getElementById("longitude").value = longitude;
+        },
+        function () {
+          alert(
+            "Unable to retrieve your location. Please enable location services."
+          );
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+
+    // Handle click event on the map
+    map.on("click", function (e) {
+      const { lat, lng } = e.latlng;
+
+      // Remove existing marker if present
+      if (marker) {
+        map.removeLayer(marker);
+      }
+
+      // Add a new marker at the clicked location
+      marker = L.marker([lat, lng]).addTo(map);
+
+      // Set latitude and longitude in hidden input fields
+      document.getElementById("latitude").value = lat;
+      document.getElementById("longitude").value = lng;
+    });
+
+    // Handle search functionality
+    document
+      .getElementById("searchButton")
+      .addEventListener("click", function () {
+        const locationInput = document.getElementById("locationInput").value;
+
+        if (locationInput) {
+          // Use Nominatim API to search for the location
+          fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+              locationInput
+            )}&format=json&addressdetails=1`
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.length > 0) {
+                const { lat, lon } = data[0]; // Get the first result's latitude and longitude
+
+                // Set the map view to the searched location
+                map.setView([lat, lon], 13); // Zoom level 13
+
+                // Remove existing marker if present
+                if (marker) {
+                  map.removeLayer(marker);
+                }
+
+                // Add a marker at the searched location
+                marker = L.marker([lat, lon]).addTo(map);
+
+                // Set latitude and longitude in hidden input fields
+                document.getElementById("latitude").value = lat;
+                document.getElementById("longitude").value = lon;
+              } else {
+                alert("Location not found. Please try a different search.");
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching location:", error);
+              alert("Error fetching location. Please try again.");
+            });
+        } else {
+          alert("Please enter a location to search.");
+        }
+      });
+  }
+</script>
