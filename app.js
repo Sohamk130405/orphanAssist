@@ -1,13 +1,21 @@
 const express = require("express");
 const fileUpload = require("express-fileupload");
 const app = express();
-const indexRoutes = require("./routes/indexRoutes");
-const requestRoutes = require("./routes/requestRoutes");
-const orgRoutes = require("./routes/orgRoutes");
 const methodOverride = require("method-override");
 const engine = require("ejs-mate");
 const path = require("path");
 const session = require("express-session");
+const {
+  showSignupPage,
+  handleSignup,
+  showLoginPage,
+  handleLogin,
+  handleLogout,
+  handleUpload,
+  showDashboard,
+  handleReject,
+  handleAccept,
+} = require("./controllers/indexController");
 
 app.use(
   session({
@@ -28,18 +36,27 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
-
-// Routes
-app.use("/api", indexRoutes);
-// app.use("/organization", orgRoutes);
-// app.use("/request", requestRoutes);
-
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.listen(3000, () => {
   console.log("Server running on port 3000");
-  
 });
 
 app.get("/", (req, res) => {
   res.render("pages/index/home", { user: req.session.user || null });
-  console.log(req.session.user);
 });
+
+app.get("/dashboard/:id", showDashboard);
+
+app.get("/signup", showSignupPage);
+app.get("/login", showLoginPage);
+app.get("/logout", handleLogout);
+
+app.post("/signup", handleSignup);
+app.post("/login", handleLogin);
+app.post("/upload", handleUpload);
+
+// Accept request
+app.post("/requests/accept/:id", handleAccept);
+
+// Reject request
+app.post("/requests/reject/:id", handleReject);

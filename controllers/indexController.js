@@ -6,7 +6,7 @@ const path = require("path");
 const db = require("../config/db.js");
 // Show login page
 exports.showLoginPage = (req, res) => {
-  res.render("pages/index/login");
+  res.render("pages/index/login", { user: res.session?.user || null });
 };
 // Common login handler
 exports.handleLogin = (req, res) => {
@@ -25,13 +25,13 @@ exports.handleLogin = (req, res) => {
       return res.status(400).send("Invalid email or password");
     }
 
-    req.session.user = user;
+    req.session.user = { ...user, role };
     res.redirect(role === "user" ? "/" : "/");
   });
 };
 
 exports.showSignupPage = (req, res) => {
-  res.render("pages/index/signup");
+  res.render("pages/index/signup", { user: res.session?.user || null });
 };
 
 exports.handleSignup = (req, res) => {
@@ -65,6 +65,7 @@ exports.handleSignup = (req, res) => {
       phone,
       longitude,
       latitude,
+      role,
     }; // Store user info in session
     res.redirect(role === "user" ? "/" : "/");
   });
@@ -75,8 +76,9 @@ exports.handleLogout = (req, res) => {
     if (err) {
       return res.status(500).send("Error logging out");
     }
-    res.redirect("/api/login"); // Redirect to the login page after logout
   });
+
+  res.redirect("/");
 };
 
 exports.handleUpload = async (req, res) => {
@@ -163,7 +165,6 @@ exports.handleUpload = async (req, res) => {
   });
 };
 
-
 // Haversine formula
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of the Earth in km
@@ -179,3 +180,61 @@ function getDistance(lat1, lon1, lat2, lon2) {
   const distance = R * c; // Distance in km
   return distance;
 }
+
+exports.showDashboard = (req, res) => {
+  const { id } = req.params;
+  const role = req.session.user.role;
+  console.log(id, role);
+
+  if (role === "user") {
+    Request.findByUserId(id, (err, results) => {
+      if (err) {
+        return res.send(err); // Return to avoid continuing execution if error occurs
+      }
+      res.render("pages/index/dashboard", {
+        user: req.session.user || null,
+        requests: results,
+      });
+      console.log(results); // Log the requests after query completion
+    });
+  } else {
+    Request.findByOrgId(id, (err, results) => {
+      if (err) {
+        return res.send(err); // Return to avoid continuing execution if error occurs
+      }
+      res.render("pages/index/dashboard", {
+        user: req.session.user || null,
+        requests: results,
+      });
+      console.log(results); // Log the requests after query completion
+    });
+  }
+};
+
+exports.handleAccept = (req, res) => {
+  try {
+    const requestId = req.params.id;
+    Request.updateRequestStatus(requestId, "accepted", () => {
+      res.json({ success: true });
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error accepting request" });
+  }
+};
+
+exports.handleReject = (req, res) => {
+  try {
+    const requestId = req.params.id;
+    Request.updateRequestStatus(requestId, "rejected", () => {
+      res.json({ success: true });
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error rejecting request" });
+  }
+};

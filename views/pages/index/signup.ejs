@@ -1,35 +1,162 @@
 <% layout('layouts/boilerplate') -%>
-<form action="/api/signup" method="POST">
-  <label for="name">Name:</label>
-  <input type="text" name="name" id="name" required />
 
-  <label for="email">Email:</label>
-  <input type="email" name="email" id="email" required />
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8 col-sm-10">
+      <div class="card shadow-sm p-4">
+        <h2 class="text-center mb-4">Sign Up</h2>
+        <form action="/signup" method="POST">
+          <!-- Name Field -->
+          <div class="mb-3">
+            <label for="name" class="form-label">Name:</label>
+            <input
+              type="text"
+              class="form-control"
+              name="name"
+              id="name"
+              placeholder="Enter your name"
+              required
+            />
+          </div>
 
-  <label for="phone">Phone:</label>
-  <input type="tel" name="phone" id="phone" required />
+          <!-- Email Field -->
+          <div class="mb-3">
+            <label for="email" class="form-label">Email:</label>
+            <input
+              type="email"
+              class="form-control"
+              name="email"
+              id="email"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
 
-  <label for="password">Password:</label>
-  <input type="password" name="password" id="password" required />
+          <!-- Phone Field -->
+          <div class="mb-3">
+            <label for="phone" class="form-label">Phone:</label>
+            <input
+              type="tel"
+              class="form-control"
+              name="phone"
+              id="phone"
+              placeholder="Enter your phone number"
+              required
+            />
+          </div>
 
-  <label for="role">Sign up as:</label>
-  <select name="role" id="role" required>
-    <option value="user">User</option>
-    <option value="organization">Organization</option>
-  </select>
+          <!-- Password Field -->
+          <div class="mb-3">
+            <label for="password" class="form-label">Password:</label>
+            <input
+              type="password"
+              class="form-control"
+              name="password"
+              id="password"
+              placeholder="Enter your password"
+              required
+            />
+          </div>
 
-  <div id="locationField" style="display: none">
-    <label for="location">Select Location:</label>
-    <input type="text" id="locationInput" placeholder="Search for a location" />
-    <button type="button" id="searchButton">Search</button>
-    <div id="map" style="height: 400px; width: 100%"></div>
-    <input type="hidden" name="latitude" id="latitude" />
-    <input type="hidden" name="longitude" id="longitude" />
+          <!-- Role Selection -->
+          <div class="mb-3">
+            <label for="role" class="form-label">Sign up as:</label>
+            <select
+              name="role"
+              id="role"
+              class="form-select"
+              aria-label="Default select example"
+              required
+            >
+              <option value="user">User</option>
+              <option value="organization">Organization</option>
+            </select>
+          </div>
+
+          <!-- Location Field (Hidden for users) -->
+          <div id="locationField" style="display: none">
+            <div class="mb-3">
+              <label for="locationInput" class="form-label"
+                >Select Location:</label
+              >
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="locationInput"
+                  placeholder="Search for a location"
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="searchButton"
+                >
+                  Search
+                </button>
+              </div>
+            </div>
+
+            <!-- Map Display -->
+            <div class="mb-3">
+              <div
+                id="map"
+                style="height: 400px; width: 100%; border: 1px solid #ccc"
+              ></div>
+            </div>
+
+            <!-- Hidden Fields for Latitude and Longitude -->
+            <input type="hidden" name="latitude" id="latitude" />
+            <input type="hidden" name="longitude" id="longitude" />
+          </div>
+
+          <!-- Submit Button -->
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-block">
+              Sign Up
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
+</div>
 
-  <button type="submit">Sign Up</button>
-</form>
+<!-- Custom CSS -->
+<style>
+  body {
+    background-color: #f8f9fa;
+  }
 
+  .card {
+    background-color: white;
+    border-radius: 10px;
+    border: none;
+  }
+
+  .form-label {
+    font-weight: 500;
+  }
+
+  #map {
+    border-radius: 5px;
+  }
+
+  .btn-block {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .btn-block:hover {
+    background-color: #0056b3;
+  }
+</style>
+
+<!-- JavaScript for Map and Role Selection -->
 <script>
   // Event listener for role selection
   document.getElementById("role").addEventListener("change", function () {
@@ -43,7 +170,7 @@
   });
 
   function initMap() {
-    const map = L.map("map").setView([20.5937, 78.9629], 5); // Set initial view to India
+    const map = L.map("map").setView([20.5937, 78.9629], 5); // Initial view over India
 
     // Add OpenStreetMap tile layer
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -103,7 +230,6 @@
         const locationInput = document.getElementById("locationInput").value;
 
         if (locationInput) {
-          // Use Nominatim API to search for the location
           fetch(
             `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
               locationInput

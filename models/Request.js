@@ -47,9 +47,19 @@ const Request = {
   },
 
   // Get all requests made by a specific user (callback handles result)
-  getAllRequests: (userId, callback) => {
+  findByUserId: (userId, callback) => {
     const query = "SELECT * FROM requests WHERE user_id = ?";
     db.query(query, [userId], (err, results) => {
+      if (err) {
+        return callback(err, null);
+      }
+      console.log(results);
+      callback(null, results);
+    });
+  },
+  findByOrgId: (orgId, callback) => {
+    const query = "SELECT * FROM requests WHERE organization_id = ?";
+    db.query(query, [orgId], (err, results) => {
       if (err) {
         return callback(err, null);
       }

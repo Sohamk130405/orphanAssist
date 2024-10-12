@@ -1,40 +1,122 @@
-<% layout("layouts/boilerplate.ejs") -%> <% if(user){ %>
-<h1>Welcome User</h1>
-<form action="/api/logout" method="GET">
-  <button type="submit">Logout</button>
-</form>
-<form action="/api/upload" method="POST" enctype="multipart/form-data">
-  <label for="photo">Upload Photo:</label>
-  <input type="file" name="photo" id="photo" accept="image/*" required />
+<% layout("layouts/boilerplate.ejs") -%> <% if (user !== null && user.role ===
+'user') { %>
+<div class="container-fluid mt-5">
+  <h1 class="text-center">Upload Photo of Orphan Child</h1>
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <form
+        action="/upload"
+        method="POST"
+        enctype="multipart/form-data"
+        id="photoForm"
+      >
+        <div class="form-group mb-3">
+          <label for="photo" class="form-label">Upload Photo</label>
+          <input
+            type="file"
+            name="photo"
+            id="photo"
+            class="form-control"
+            accept="image/*"
+            required
+            onchange="previewImage(event)"
+          />
+        </div>
 
-  <input type="hidden" name="latitude" id="latitude" />
-  <input type="hidden" name="longitude" id="longitude" />
+        <div class="form-group mb-3">
+          <label for="preview" class="form-label">Image Preview</label>
+          <img
+            id="imagePreview"
+            class="img-fluid rounded shadow-sm"
+            style="max-height: 300px"
+          />
+        </div>
 
-  <button type="submit">Submit</button>
-</form>
+        <input type="hidden" name="latitude" id="latitude" />
+        <input type="hidden" name="longitude" id="longitude" />
 
-<% }else{ %>
-<button onclick="location.href='/api/login'">Login</button>
-<% } %>
+        <button type="submit" class="btn btn-primary btn-block" id="uploadBtn">
+          Upload Photo
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Automatically get user's current location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        function (position) {
-          document.getElementById("latitude").value = position.coords.latitude;
-          document.getElementById("longitude").value =
-            position.coords.longitude;
-        },
-        function (error) {
-          alert(
-            "Could not get your location. Please enable location services."
-          );
-        }
-      );
-    } else {
-      alert("Geolocation is not supported by your browser.");
-    }
-  });
+  // Image preview functionality
+  function previewImage(event) {
+    const reader = new FileReader();
+    reader.onload = function () {
+      const output = document.getElementById("imagePreview");
+      output.src = reader.result;
+      output.style.display = "block"; // Show the image preview
+    };
+    reader.readAsDataURL(event.target.files[0]);
+  }
+
+  // Geolocation functionality (if needed)
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function (position) {
+      document.getElementById("latitude").value = position.coords.latitude;
+      document.getElementById("longitude").value = position.coords.longitude;
+    });
+  }
 </script>
+
+<% } else if (user !== null && user.role === 'organization') { %>
+<div class="container mt-5">
+  <h1 class="text-center">Welcome, <%= user.name %>!</h1>
+  <div class="text-center">
+    <p>You can now manage orphan requests, check reports, and more.</p>
+    <a href="/dashboard/<%= user.id %>" class="btn btn-primary"
+      >Go to Dashboard</a
+    >
+  </div>
+
+  <div class="mt-4">
+    <h2>Organization Features:</h2>
+    <ul class="list-group">
+      <li class="list-group-item">Manage orphan requests</li>
+      <li class="list-group-item">View activity reports</li>
+      <li class="list-group-item">Update organizational profile</li>
+    </ul>
+  </div>
+</div>
+
+<% } else { %>
+
+<div class="container mt-5 text-center">
+  <h1>Welcome to Our Orphan Child Support Platform</h1>
+  <p class="lead">
+    Join us in making a difference by helping orphan children in need.
+  </p>
+  <div class="mt-4">
+    <h2>Why Choose Us?</h2>
+    <ul class="list-unstyled">
+      <li>👶 Connect with orphan children who need your help.</li>
+      <li>📸 Upload and manage requests to provide assistance.</li>
+      <li>🌍 Be part of a compassionate community.</li>
+      <li>📈 Track your contributions and impact.</li>
+    </ul>
+  </div>
+
+  <div class="mt-4">
+    <a href="/login" class="btn btn-primary btn-lg">Login</a>
+    <a href="/signup" class="btn btn-warning btn-lg">Regsiter</a>
+  </div>
+</div>
+<% } %>
+
+<style>
+  #imagePreview {
+    display: none;
+    margin-top: 20px;
+  }
+  /* Additional styles for the home page */
+  .container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+  }
+</style>
