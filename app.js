@@ -5,18 +5,10 @@ const methodOverride = require("method-override");
 const engine = require("ejs-mate");
 const path = require("path");
 const session = require("express-session");
-const {
-  showSignupPage,
-  handleSignup,
-  showLoginPage,
-  handleLogin,
-  handleLogout,
-  handleUpload,
-  showDashboard,
-  handleReject,
-  handleAccept,
-} = require("./controllers/indexController");
-
+const https = require("https");
+const http = require("http");
+const indexRoute = require("./routes/index");
+const fs = require("fs");
 app.use(
   session({
     secret: "1234567890",
@@ -37,26 +29,28 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+app.use("/", indexRoute);
+// Load SSL certificate and key
+const key = fs.readFileSync(
+  path.join(__dirname, "./orphan_assist-privateKey.key"),
+  "utf8"
+);
+const cert = fs.readFileSync(
+  path.join(__dirname, "./orphan_assist.crt"),
+  "utf8"
+);
+
+const PORT = process.env.PORT || 3000;
+
+const httpsServer = https.createServer({ key, cert }, app);
+const httpServer = http.createServer(app);
+
+// Start both HTTP and HTTPS servers
+httpServer.listen(80, () => {
+  console.log("HTTP Server running on port 80");
 });
 
-app.get("/", (req, res) => {
-  res.render("pages/index/home", { user: req.session.user || null });
+httpsServer.listen(PORT, () => {
+  console.log(`HTTPS Server running on port ${PORT}`);
+  console.log(`https://localhost:${PORT}/`);
 });
-
-app.get("/dashboard/:id", showDashboard);
-
-app.get("/signup", showSignupPage);
-app.get("/login", showLoginPage);
-app.get("/logout", handleLogout);
-
-app.post("/signup", handleSignup);
-app.post("/login", handleLogin);
-app.post("/upload", handleUpload);
-
-// Accept request
-app.post("/requests/accept/:id", handleAccept);
-
-// Reject request
-app.post("/requests/reject/:id", handleReject);

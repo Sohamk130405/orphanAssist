@@ -2,7 +2,7 @@ const db = require("../config/db.js");
 
 const Organization = {
   create: (data, callback) => {
-    console.log(data);
+   
     const query =
       "INSERT INTO organizations (name, email, password, phone, longitude , latitude) VALUES (?, ?, ?, ?, ? , ?)";
     db.query(

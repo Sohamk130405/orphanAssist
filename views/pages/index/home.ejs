@@ -1,7 +1,37 @@
-<% layout("layouts/boilerplate.ejs") -%> <% if (user !== null && user.role ===
-'user') { %>
-<div class="container-fluid mt-5">
-  <h1 class="text-center">Upload Photo of Orphan Child</h1>
+<!-- Home -->
+<% layout("layouts/boilerplate.ejs") -%>
+
+<!-- Common Section for All Users -->
+<div class="container mt-5 text-center">
+  <h1 class="display-4">Welcome to Our Orphan Child Support Platform</h1>
+  <p class="lead">
+    Join us in making a difference for orphan children in need.
+  </p>
+
+  <div class="mt-5">
+    <h2 class="mb-4">Why Choose Us?</h2>
+    <ul class="list-unstyled">
+      <li>👶 Connect with orphan children in need of support.</li>
+      <li>📸 Upload and manage requests to provide assistance.</li>
+      <li>🌍 Join a compassionate community.</li>
+      <li>📈 Track your contributions and impact.</li>
+    </ul>
+  </div>
+
+  <!-- Display login/signup buttons only for non-logged-in users -->
+  <% if (!user) { %>
+  <div class="mt-4">
+    <a href="/login" class="btn btn-primary btn-lg me-2">Login</a>
+    <a href="/signup" class="btn btn-warning btn-lg">Register</a>
+  </div>
+  <% } %>
+</div>
+
+<!-- User-Specific Sections -->
+<% if (user && user.role === 'user') { %>
+<!-- Section for Logged-In Users with 'user' Role -->
+<div class="container mt-5">
+  <h1 class="text-center mb-4">Upload Photo of Orphan Child</h1>
   <div class="row justify-content-center">
     <div class="col-md-6">
       <form
@@ -19,8 +49,21 @@
             class="form-control"
             accept="image/*"
             required
+            capture
             onchange="previewImage(event)"
           />
+        </div>
+        <div class="mb-3">
+          <label for="response-description" class="form-label"
+            >Request Description</label
+          >
+          <textarea
+            class="form-control"
+            id="description"
+            name="description"
+            rows="3"
+            required
+          ></textarea>
         </div>
 
         <div class="form-group mb-3">
@@ -28,14 +71,14 @@
           <img
             id="imagePreview"
             class="img-fluid rounded shadow-sm"
-            style="max-height: 300px"
+            style="max-height: 300px; display: none"
           />
         </div>
 
         <input type="hidden" name="latitude" id="latitude" />
         <input type="hidden" name="longitude" id="longitude" />
 
-        <button type="submit" class="btn btn-primary btn-block" id="uploadBtn">
+        <button type="submit" class="btn btn-primary w-100">
           Upload Photo
         </button>
       </form>
@@ -43,32 +86,12 @@
   </div>
 </div>
 
-<script>
-  // Image preview functionality
-  function previewImage(event) {
-    const reader = new FileReader();
-    reader.onload = function () {
-      const output = document.getElementById("imagePreview");
-      output.src = reader.result;
-      output.style.display = "block"; // Show the image preview
-    };
-    reader.readAsDataURL(event.target.files[0]);
-  }
-
-  // Geolocation functionality (if needed)
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function (position) {
-      document.getElementById("latitude").value = position.coords.latitude;
-      document.getElementById("longitude").value = position.coords.longitude;
-    });
-  }
-</script>
-
-<% } else if (user !== null && user.role === 'organization') { %>
+<% } else if (user && user.role === 'organization') { %>
+<!-- Section for Logged-In Users with 'organization' Role -->
 <div class="container mt-5">
   <h1 class="text-center">Welcome, <%= user.name %>!</h1>
-  <div class="text-center">
-    <p>You can now manage orphan requests, check reports, and more.</p>
+  <div class="text-center mb-4">
+    <p>You can manage orphan requests, check reports, and more.</p>
     <a href="/dashboard/<%= user.id %>" class="btn btn-primary"
       >Go to Dashboard</a
     >
@@ -83,40 +106,63 @@
     </ul>
   </div>
 </div>
-
-<% } else { %>
-
-<div class="container mt-5 text-center">
-  <h1>Welcome to Our Orphan Child Support Platform</h1>
-  <p class="lead">
-    Join us in making a difference by helping orphan children in need.
-  </p>
-  <div class="mt-4">
-    <h2>Why Choose Us?</h2>
-    <ul class="list-unstyled">
-      <li>👶 Connect with orphan children who need your help.</li>
-      <li>📸 Upload and manage requests to provide assistance.</li>
-      <li>🌍 Be part of a compassionate community.</li>
-      <li>📈 Track your contributions and impact.</li>
-    </ul>
-  </div>
-
-  <div class="mt-4">
-    <a href="/login" class="btn btn-primary btn-lg">Login</a>
-    <a href="/signup" class="btn btn-warning btn-lg">Regsiter</a>
-  </div>
-</div>
 <% } %>
 
+<script>
+  // Image preview functionality
+  function previewImage(event) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const output = document.getElementById("imagePreview");
+      output.src = reader.result;
+      output.style.display = "block";
+    };
+    reader.readAsDataURL(event.target.files[0]);
+  }
+
+  // Geolocation functionality
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((position) => {
+      document.getElementById("latitude").value = position.coords.latitude;
+      document.getElementById("longitude").value = position.coords.longitude;
+    });
+  }
+</script>
+
 <style>
+  /* Image Preview */
   #imagePreview {
     display: none;
     margin-top: 20px;
   }
-  /* Additional styles for the home page */
+
+  /* Common Page Styling */
   .container {
     max-width: 800px;
     margin: auto;
     padding: 20px;
+  }
+
+  /* Home Page Styling */
+  .container-fluid {
+    padding: 40px 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+  }
+
+  /* Landing Page Styling */
+  .display-4 {
+    font-weight: bold;
+    color: #343a40;
+  }
+
+  .lead {
+    font-size: 1.2rem;
+    color: #6c757d;
+  }
+
+  .btn-lg {
+    padding: 10px 20px;
+    font-size: 1.1rem;
   }
 </style>

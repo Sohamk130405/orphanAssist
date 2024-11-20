@@ -36,7 +36,6 @@ exports.showSignupPage = (req, res) => {
 
 exports.handleSignup = (req, res) => {
   const { name, email, phone, password, role, longitude, latitude } = req.body;
-  console.log(longitude, latitude);
 
   // Hash the password
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -82,10 +81,8 @@ exports.handleLogout = (req, res) => {
 };
 
 exports.handleUpload = async (req, res) => {
-  const { latitude, longitude } = req.body;
+  const { latitude, longitude, description } = req.body;
   const userId = req.session.user.id; // Assuming the user is logged in
-
-  console.log("Received data: ", { latitude, longitude, userId });
 
   // Check if a file was uploaded
   if (!req.files || Object.keys(req.files).length === 0) {
@@ -94,8 +91,6 @@ exports.handleUpload = async (req, res) => {
 
   const photo = req.files.photo;
   const uploadPath = path.join(__dirname, "../public/uploads/", photo.name);
-
-  console.log("Uploading file to: ", uploadPath);
 
   // Move the uploaded file to the uploads directory
   photo.mv(uploadPath, async (err) => {
@@ -113,8 +108,6 @@ exports.handleUpload = async (req, res) => {
           return res.status(500).send("Database error");
         }
 
-        console.log("Fetched organizations: ", organizations);
-
         let nearestOrg = null;
         let minDistance = Infinity;
 
@@ -125,7 +118,6 @@ exports.handleUpload = async (req, res) => {
             org.latitude,
             org.longitude
           );
-          console.log(`Distance to organization ${org.id}: ${distance} km`);
 
           if (distance < minDistance) {
             minDistance = distance;
@@ -144,9 +136,8 @@ exports.handleUpload = async (req, res) => {
           latitude,
           longitude,
           organization_id: nearestOrg.id,
+          description,
         };
-
-        console.log("Creating request: ", newRequest);
 
         Request.createRequest(newRequest, (err, result) => {
           if (err) {
@@ -154,7 +145,6 @@ exports.handleUpload = async (req, res) => {
             return res.status(500).send("Failed to create request");
           }
 
-          console.log("Request successfully created: ", result);
           res.redirect("/");
         });
       });
@@ -184,57 +174,64 @@ function getDistance(lat1, lon1, lat2, lon2) {
 exports.showDashboard = (req, res) => {
   const { id } = req.params;
   const role = req.session.user.role;
-  console.log(id, role);
+
+  if (role === "organization") {
+    Request.findByOrgId(id, (err, results) => {
+      if (err) {
+        return res.send(err); // Return to avoid continuing execution if error occurs
+      }
+      console.log(results);
+      res.render("pages/index/dashboard", {
+        user: req.session.user || null,
+        requests: results,
+      });
+      // Log the requests after query completion
+    });
+  }
+};
+
+exports.showProfile = (req, res) => {
+  const { id } = req.params;
+  const role = req.session.user.role;
 
   if (role === "user") {
     Request.findByUserId(id, (err, results) => {
       if (err) {
         return res.send(err); // Return to avoid continuing execution if error occurs
       }
-      res.render("pages/index/dashboard", {
+      console.log(results);
+      res.render("pages/user/profile", {
         user: req.session.user || null,
         requests: results,
       });
-      console.log(results); // Log the requests after query completion
-    });
-  } else {
-    Request.findByOrgId(id, (err, results) => {
-      if (err) {
-        return res.send(err); // Return to avoid continuing execution if error occurs
-      }
-      res.render("pages/index/dashboard", {
-        user: req.session.user || null,
-        requests: results,
-      });
-      console.log(results); // Log the requests after query completion
+      // Log the requests after query completion
     });
   }
 };
 
-exports.handleAccept = (req, res) => {
+exports.handleResponse = (req, res) => {
   try {
-    const requestId = req.params.id;
-    Request.updateRequestStatus(requestId, "accepted", () => {
-      res.json({ success: true });
-    });
+    const {  request_id, response_action } = req.body;
+    // Validate the input
+    if (!request_id || !response_action ) {
+      return res.status(400).json({ message: "Invalid request data" });
+    }
+
+    // Validate the action
+    if (!["accepted", "rejected"].includes(response_action)) {
+      return res.status(400).json({ message: "Invalid action" });
+    }
+    Request.updateRequestStatus(
+      request_id,
+      response_action,
+      () => {
+        res.redirect("/dashboard" + req.session.user.id);
+      }
+    );
   } catch (error) {
     console.error(error);
     res
       .status(500)
       .json({ success: false, message: "Error accepting request" });
-  }
-};
-
-exports.handleReject = (req, res) => {
-  try {
-    const requestId = req.params.id;
-    Request.updateRequestStatus(requestId, "rejected", () => {
-      res.json({ success: true });
-    });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ success: false, message: "Error rejecting request" });
   }
 };
